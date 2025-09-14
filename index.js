@@ -200,13 +200,19 @@ function formatTurnOrder(players) {
 
 function announceTurn(ctx, game, extra = "") {
   const current = game.players[game.currentTurnIndex];
-  const lastLetter = game.lastWord ? game.lastWord.slice(-1) : "-";
+  const lastLetter = game.lastWord ? game.lastWord.slice(-1).toUpperCase() : "Start with any word";
+
+  const mention = `<a href="tg://user?id=${current.id}">${current.name}</a>`;
+
+//   🎯 Turn: ${current.name}
+
+
   const msg = `➡️ Round ${game.round}
-🎯 Turn: ${current.name}
+ 🎯 Turn: ${mention}
 ⏱ Time: ${game.timeLimit / 1000}s
 🔤 Word must start with: '${lastLetter}', min length: ${game.minLength}
 ${extra}`;
-  ctx.reply(msg);
+  ctx.reply(msg, { parse_mode: "HTML" });
 }
 
 // --- Turn Timer ---
