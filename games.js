@@ -111,6 +111,7 @@ class GameManager {
         this.games.set(chatId, {
             phase: "waiting",
             players: [{ id: starterId, name: starterName }],
+            eliminated: new Set(),
             currentTurnIndex: 0,
             lastWord: "",
             usedWords: new Set(),
