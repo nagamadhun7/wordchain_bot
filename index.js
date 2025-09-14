@@ -354,7 +354,7 @@
 
 
 
-require('dotenv').config();
+// require('dotenv').config();
 const { Bot } = require("grammy");
 const gameManager = require("./games");
 
