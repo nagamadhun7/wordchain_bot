@@ -513,7 +513,7 @@ bot.on("message:text", async ctx => {
     const lastLetter = game.lastWord.slice(-1).toUpperCase();
 
     ctx.reply(
-        `✅ Word accepted: ${word}\n➡️ Next turn: ${mentionNext}\n🔤 Next word must start with: '${lastLetter}'`,
+        `✅ Word accepted: ${word}\n🔤 Next word must start with: '${lastLetter}'`,
         { parse_mode: "HTML" }
     );
 
