@@ -118,7 +118,7 @@ class GameManager {
             scores: new Map([[starterId, 0]]),
             timer: null,
             round: 1,
-            timeLimit: 30 * 1000,
+            timeLimit: 30 * 1000, // milliseconds
             minLength: 3
         });
     }
