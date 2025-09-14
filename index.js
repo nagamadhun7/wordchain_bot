@@ -389,37 +389,66 @@ bot.on("message:text", async (ctx) => {
 });
 
 // --- Turn management ---
+// function startTurnTimer(chatId, ctx) {
+//   const game = gameManager.getGame(chatId);
+//   if (!game) return;
+
+//   const current = gameManager.currentPlayer(chatId);
+//   announceTurn(ctx, game, current);
+
+//   game.timer = setTimeout(() => {
+//     ctx.reply(`${current.name} ran out of time ❌`);
+//     gameManager.removePlayer(chatId, current.id);
+//     //added later for remove eleiminated players
+//     game.eliminated.add(current.id);
+
+//     if (game.players.length === 1) {
+//       const winner = game.players[0];
+//       ctx.reply(`🏆 ${winner.name} wins!`);
+//       gameManager.endGame(chatId);
+//     } else {
+//       nextPlayerTurn(chatId, ctx);
+//     }
+//   }, game.timeLimit);
+// }
 function startTurnTimer(chatId, ctx) {
-  const game = gameManager.getGame(chatId);
-  if (!game) return;
+    const game = gameManager.getGame(chatId);
+    if (!game) return;
+  
+    const current = gameManager.currentPlayer(chatId);
+    announceTurn(ctx, game, current); // announce once
+  
+    game.timer = setTimeout(() => {
+      ctx.reply(`${current.name} ran out of time ❌`);
+      gameManager.removePlayer(chatId, current.id);
+      game.eliminated.add(current.id);
+  
+      if (game.players.length === 1) {
+        const winner = game.players[0];
+        ctx.reply(`🏆 ${winner.name} wins!`);
+        gameManager.endGame(chatId);
+      } else {
+        nextPlayerTurn(chatId, ctx); // will announce for next player
+      }
+    }, game.timeLimit);
+  }
+  
 
-  const current = gameManager.currentPlayer(chatId);
-  announceTurn(ctx, game, current);
+// function nextPlayerTurn(chatId, ctx) {
+//   const game = gameManager.getGame(chatId);
+//   if (!game) return;
 
-  game.timer = setTimeout(() => {
-    ctx.reply(`${current.name} ran out of time ❌`);
-    gameManager.removePlayer(chatId, current.id);
-    //added later for remove eleiminated players
-    game.eliminated.add(current.id);
-
-    if (game.players.length === 1) {
-      const winner = game.players[0];
-      ctx.reply(`🏆 ${winner.name} wins!`);
-      gameManager.endGame(chatId);
-    } else {
-      nextPlayerTurn(chatId, ctx);
-    }
-  }, game.timeLimit);
-}
-
+//   const next = gameManager.nextTurn(chatId);
+//   announceTurn(ctx, game, next);
+//   // startTurnTimer(chatId, ctx);
+// }
 function nextPlayerTurn(chatId, ctx) {
-  const game = gameManager.getGame(chatId);
-  if (!game) return;
-
-  const next = gameManager.nextTurn(chatId);
-  announceTurn(ctx, game, next);
-  // startTurnTimer(chatId, ctx);
-}
+    const game = gameManager.getGame(chatId);
+    if (!game) return;
+  
+    gameManager.nextTurn(chatId); // move index
+    startTurnTimer(chatId, ctx);  // only start timer & announce here
+  }
 
 // --- Start bot ---
 bot.start({ webhook: false });
