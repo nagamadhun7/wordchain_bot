@@ -60,6 +60,9 @@ bot.on("message:text", async (ctx) => {
     const game = gameManager.getGame(chatId);
     if (!game || game.phase !== "playing") return;
 
+    const player = game.players.find(p => p.id === userId);
+    if (!player) return; 
+    
     const current = gameManager.currentPlayer(chatId);
     if (current.id !== userId) return ctx.reply(`⛔ It's not your turn! Next: ${current.name}`);
 
