@@ -1,8 +1,3 @@
-
-
-
-
-
 const { Bot } = require("grammy");
 const gameManager = require("./games");
 
