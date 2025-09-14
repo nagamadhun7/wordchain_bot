@@ -277,6 +277,40 @@ bot.command("endgame", (ctx) => {
 });
 
 // --- Word handler ---
+// bot.on("message:text", async (ctx) => {
+//     const text = ctx.message.text.trim();
+//     if (text.startsWith("/")) return; // ignore commands
+
+//     const chatId = ctx.chat.id;
+//     const userId = ctx.from.id;
+//     const word = text.toLowerCase();
+
+//     const game = gameManager.getGame(chatId);
+//     if (!game || game.phase !== "playing") return;
+
+//     const current = gameManager.currentPlayer(chatId);
+//     if (current.id !== userId) return;
+
+//     if (word.length < game.minLength) return ctx.reply(`❌ Word too short! Min length: ${game.minLength}`);
+
+//     if (!game.lastWord) {
+//         const valid = await gameManager.validateWord(word);
+//         if (!valid) return ctx.reply("❌ Not a valid word!");
+//         gameManager.addWord(chatId, userId, word);
+//         if (game.timer) clearTimeout(game.timer);
+//         nextPlayerTurn(chatId, ctx);
+//         return;
+//     }
+
+//     if (word[0] !== game.lastWord.slice(-1)) return ctx.reply(`❌ Word must start with '${game.lastWord.slice(-1)}'`);
+//     if (game.usedWords.has(word)) return ctx.reply("❌ Word already used!");
+//     const valid = await gameManager.validateWord(word);
+//     if (!valid) return ctx.reply("❌ Not a valid word!");
+
+//     gameManager.addWord(chatId, userId, word);
+//     if (game.timer) clearTimeout(game.timer);
+//     nextPlayerTurn(chatId, ctx);
+// });
 bot.on("message:text", async (ctx) => {
     const text = ctx.message.text.trim();
     if (text.startsWith("/")) return; // ignore commands
@@ -288,29 +322,68 @@ bot.on("message:text", async (ctx) => {
     const game = gameManager.getGame(chatId);
     if (!game || game.phase !== "playing") return;
 
-    const current = gameManager.currentPlayer(chatId);
-    if (current.id !== userId) return;
+    const player = game.players.find(p => p.id === userId);
+    if (!player) return; // ignore non-players
 
+    const current = gameManager.currentPlayer(chatId);
+    if (current.id !== userId) {
+        return ctx.reply(`⛔ Not your turn! Current turn: ${current.name}`);
+    }
+
+    // Check word length
     if (word.length < game.minLength) return ctx.reply(`❌ Word too short! Min length: ${game.minLength}`);
 
+    // First word of game
     if (!game.lastWord) {
         const valid = await gameManager.validateWord(word);
         if (!valid) return ctx.reply("❌ Not a valid word!");
+
         gameManager.addWord(chatId, userId, word);
+
+        // Move to next turn
+        gameManager.nextTurn(chatId);
+
+        const next = gameManager.currentPlayer(chatId);
+        const msg =
+`✅ Word accepted: ${word}
+➡️ Next turn: ${next.name}
+🎯 Round: ${game.round}
+⏱ Time: ${game.timeLimit / 1000}s
+🔤 Word must start with: '${word.slice(-1)}', min length: ${game.minLength}`;
+        ctx.reply(msg);
+
         if (game.timer) clearTimeout(game.timer);
-        nextPlayerTurn(chatId, ctx);
+        startTurnTimer(chatId, ctx); // timer starts for next player
         return;
     }
 
+    // Subsequent words
     if (word[0] !== game.lastWord.slice(-1)) return ctx.reply(`❌ Word must start with '${game.lastWord.slice(-1)}'`);
     if (game.usedWords.has(word)) return ctx.reply("❌ Word already used!");
+
     const valid = await gameManager.validateWord(word);
     if (!valid) return ctx.reply("❌ Not a valid word!");
 
     gameManager.addWord(chatId, userId, word);
+
+    // Move to next turn
+    gameManager.nextTurn(chatId);
+    const next = gameManager.currentPlayer(chatId);
+
+    // Single message combining everything
+    const msg =
+`✅ Word accepted: ${word}
+➡️ Next turn: ${next.name}
+🎯 Round: ${game.round}
+⏱ Time: ${game.timeLimit / 1000}s
+🔤 Word must start with: '${word.slice(-1)}', min length: ${game.minLength}`;
+
+    ctx.reply(msg);
+
     if (game.timer) clearTimeout(game.timer);
-    nextPlayerTurn(chatId, ctx);
+    startTurnTimer(chatId, ctx); // timer for next player
 });
+
 
 // --- Turn management ---
 function startTurnTimer(chatId, ctx) {
@@ -340,7 +413,7 @@ function nextPlayerTurn(chatId, ctx) {
 
     const next = gameManager.nextTurn(chatId);
     announceTurn(ctx, game, next);
-    startTurnTimer(chatId, ctx);
+    // startTurnTimer(chatId, ctx);
 }
 
 // --- Start bot ---
