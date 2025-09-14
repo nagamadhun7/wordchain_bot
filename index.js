@@ -186,7 +186,175 @@
 
 
 
+// v2 working code
+// const { Bot } = require("grammy");
+// const gameManager = require("./games");
 
+// const bot = new Bot(process.env.BOT_TOKEN);
+// const MIN_PLAYERS = 2;
+
+// // --- Helpers ---
+// function formatTurnOrder(players) {
+//   return players.map(p => p.name).join(" → ");
+// }
+
+// function announceTurn(ctx, game, extra = "") {
+//   const current = game.players[game.currentTurnIndex];
+//   const lastLetter = game.lastWord ? game.lastWord.slice(-1).toUpperCase() : "Start with any word";
+
+//   const mention = `<a href="tg://user?id=${current.id}">${current.name}</a>`;
+
+// //   🎯 Turn: ${current.name}
+
+
+//   const msg = `➡️ Round ${game.round}
+//  🎯 Turn: ${mention}
+// ⏱ Time: ${game.timeLimit / 1000}s
+// 🔤 Word must start with: '${lastLetter}', min length: ${game.minLength}
+// ${extra}`;
+//   ctx.reply(msg, { parse_mode: "HTML" });
+// }
+
+// // --- Turn Timer ---
+// function startTurnTimer(chatId, ctx) {
+//   const game = gameManager.getGame(chatId);
+//   if (!game || game.players.length === 0) return;
+
+//   // Clear previous timer
+//   if (game.timer) clearTimeout(game.timer);
+
+//   const current = gameManager.currentPlayer(chatId);
+//   announceTurn(ctx, game);
+
+//   // Capture current player for closure
+//   const player = { ...current };
+
+//   game.timer = setTimeout(() => {
+//     ctx.reply(`${player.name} ran out of time ❌`);
+//     gameManager.removePlayer(chatId, player.id);
+//     game.eliminated.add(player.id);
+
+//     // Check game end
+//     if (game.players.length === 1) {
+//       ctx.reply(`🏆 ${game.players[0].name} wins!`);
+//       gameManager.endGame(chatId);
+//       return;
+//     } else if (game.players.length === 0) {
+//       ctx.reply(`No players left. Game over ❌`);
+//       gameManager.endGame(chatId);
+//       return;
+//     }
+
+//     // Move to next turn
+//     gameManager.nextTurn(chatId);
+//     startTurnTimer(chatId, ctx);
+
+//   }, game.timeLimit);
+// }
+
+// // --- Commands ---
+// bot.command("startgame", ctx => {
+//   const chatId = ctx.chat.id;
+//   const starterId = ctx.from.id;
+//   const starterName = ctx.from.first_name;
+
+//   gameManager.startGame(chatId, starterId, starterName);
+//   ctx.reply(`${starterName} started a Word Chain game! 🎮 Join with /join`);
+// });
+
+// bot.command("join", ctx => {
+//   const chatId = ctx.chat.id;
+//   const userId = ctx.from.id;
+//   const userName = ctx.from.first_name;
+
+//   const game = gameManager.getGame(chatId);
+//   if (!game) return ctx.reply("No active game! Start one with /startgame");
+//   if (game.eliminated.has(userId)) return ctx.reply(`${userName}, you were eliminated ❌`);
+
+//   const added = gameManager.addPlayer(chatId, userId, userName);
+//   if (!added) return ctx.reply(`${userName} is already in the game.`);
+
+//   if (game.phase === "waiting") {
+//     ctx.reply(`${userName} joined! Players: ${formatTurnOrder(game.players)}`);
+
+//     if (game.players.length >= MIN_PLAYERS) {
+//       game.phase = "playing";
+//       gameManager.shufflePlayers(chatId);
+//       ctx.reply(`✅ Game starting!\nTurn order: ${formatTurnOrder(game.players)}`);
+//       startTurnTimer(chatId, ctx);
+//     }
+//   } else {
+//     ctx.reply(`${userName} joined mid-game! They’ll join next round.`);
+//   }
+// });
+
+// bot.command("flee", ctx => {
+//   const chatId = ctx.chat.id;
+//   const userId = ctx.from.id;
+//   const game = gameManager.getGame(chatId);
+//   if (!game || game.phase !== "playing") return ctx.reply("No active game to flee from.");
+
+//   const player = game.players.find(p => p.id === userId);
+//   if (!player) return ctx.reply("You are not in the game.");
+
+//   gameManager.removePlayer(chatId, userId);
+//   ctx.reply(`${player.name} left the game ❌`);
+
+//   if (game.players.length === 1) {
+//     ctx.reply(`🏆 ${game.players[0].name} wins!`);
+//     gameManager.endGame(chatId);
+//   } else if (game.players.length > 1) {
+//     startTurnTimer(chatId, ctx);
+//   }
+// });
+
+// bot.command("endgame", ctx => {
+//   const chatId = ctx.chat.id;
+//   const game = gameManager.getGame(chatId);
+//   if (!game) return ctx.reply("No active game!");
+//   gameManager.endGame(chatId);
+//   ctx.reply("Game ended manually.");
+// });
+
+// // --- Word handler ---
+// bot.on("message:text", async ctx => {
+//   const text = ctx.message.text.trim();
+//   if (text.startsWith("/")) return;
+
+//   const chatId = ctx.chat.id;
+//   const userId = ctx.from.id;
+//   const word = text.toLowerCase();
+
+//   const game = gameManager.getGame(chatId);
+//   if (!game || game.phase !== "playing") return;
+
+//   const current = gameManager.currentPlayer(chatId);
+//   if (current.id !== userId) return ctx.reply(`⛔ Not your turn! Current: ${current.name}`);
+
+//   // Word validation
+//   if (word.length < game.minLength) return ctx.reply(`❌ Word too short! Min: ${game.minLength}`);
+//   if (game.lastWord && word[0] !== game.lastWord.slice(-1)) return ctx.reply(`❌ Word must start with '${game.lastWord.slice(-1)}'`);
+//   if (game.usedWords.has(word)) return ctx.reply("❌ Word already used!");
+
+//   const valid = await gameManager.validateWord(word);
+//   if (!valid) return ctx.reply("❌ Not a valid word!");
+
+//   // Accept word
+//   gameManager.addWord(chatId, userId, word);
+//   ctx.reply(`✅ Word accepted: ${word}`);
+
+//   // Move to next turn
+//   gameManager.nextTurn(chatId);
+//   startTurnTimer(chatId, ctx);
+// });
+
+// // --- Start bot ---
+// bot.start({ webhook: false });
+// console.log("Word Chain Bot running...");
+
+
+
+require('dotenv').config();
 const { Bot } = require("grammy");
 const gameManager = require("./games");
 
@@ -195,157 +363,161 @@ const MIN_PLAYERS = 2;
 
 // --- Helpers ---
 function formatTurnOrder(players) {
-  return players.map(p => p.name).join(" → ");
-}
-
-function announceTurn(ctx, game, extra = "") {
-  const current = game.players[game.currentTurnIndex];
-  const lastLetter = game.lastWord ? game.lastWord.slice(-1).toUpperCase() : "Start with any word";
-
-  const mention = `<a href="tg://user?id=${current.id}">${current.name}</a>`;
-
-//   🎯 Turn: ${current.name}
-
-
-  const msg = `➡️ Round ${game.round}
- 🎯 Turn: ${mention}
-⏱ Time: ${game.timeLimit / 1000}s
-🔤 Word must start with: '${lastLetter}', min length: ${game.minLength}
-${extra}`;
-  ctx.reply(msg, { parse_mode: "HTML" });
+    return players.map(p => p.name).join(" → ");
 }
 
 // --- Turn Timer ---
 function startTurnTimer(chatId, ctx) {
-  const game = gameManager.getGame(chatId);
-  if (!game || game.players.length === 0) return;
+    const game = gameManager.getGame(chatId);
+    if (!game || game.players.length === 0) return;
 
-  // Clear previous timer
-  if (game.timer) clearTimeout(game.timer);
+    if (game.timer) clearTimeout(game.timer);
 
-  const current = gameManager.currentPlayer(chatId);
-  announceTurn(ctx, game);
+    const current = gameManager.currentPlayer(chatId);
+    const lastLetter = game.lastWord ? game.lastWord.slice(-1).toUpperCase() : "-";
+    const mention = `<a href="tg://user?id=${current.id}">${current.name}</a>`;
 
-  // Capture current player for closure
-  const player = { ...current };
+    const msg = `➡️ Round ${game.round}
+🎯 Turn: ${mention}
+⏱ Time: ${Math.floor(game.timeLimit / 1000)}s
+🔤 Word must start with: '${lastLetter}', min length: ${game.minLength}`;
 
-  game.timer = setTimeout(() => {
-    ctx.reply(`${player.name} ran out of time ❌`);
-    gameManager.removePlayer(chatId, player.id);
-    game.eliminated.add(player.id);
+    ctx.reply(msg, { parse_mode: "HTML" });
 
-    // Check game end
-    if (game.players.length === 1) {
-      ctx.reply(`🏆 ${game.players[0].name} wins!`);
-      gameManager.endGame(chatId);
-      return;
-    } else if (game.players.length === 0) {
-      ctx.reply(`No players left. Game over ❌`);
-      gameManager.endGame(chatId);
-      return;
-    }
+    game.timer = setTimeout(() => {
+        ctx.reply(`${mention} ran out of time ❌`, { parse_mode: "HTML" });
+        gameManager.removePlayer(chatId, current.id);
+        game.eliminated.add(current.id);
 
-    // Move to next turn
-    gameManager.nextTurn(chatId);
-    startTurnTimer(chatId, ctx);
+        if (game.players.length === 1) {
+            ctx.reply(`🏆 <a href="tg://user?id=${game.players[0].id}">${game.players[0].name}</a> wins!`, { parse_mode: "HTML" });
+            gameManager.endGame(chatId);
+            return;
+        } else if (game.players.length === 0) {
+            ctx.reply(`No players left. Game over ❌`);
+            gameManager.endGame(chatId);
+            return;
+        }
 
-  }, game.timeLimit);
+        gameManager.nextTurn(chatId);
+        startTurnTimer(chatId, ctx);
+    }, game.timeLimit);
 }
 
 // --- Commands ---
-bot.command("startgame", ctx => {
-  const chatId = ctx.chat.id;
-  const starterId = ctx.from.id;
-  const starterName = ctx.from.first_name;
+bot.command("startgame", (ctx) => {
+    const chatId = ctx.chat.id;
+    const starterId = ctx.from.id;
+    const starterName = ctx.from.first_name;
 
-  gameManager.startGame(chatId, starterId, starterName);
-  ctx.reply(`${starterName} started a Word Chain game! 🎮 Join with /join`);
+    gameManager.startGame(chatId, starterId, starterName);
+    ctx.reply(`${starterName} started a Word Chain game! 🎮 Join with /join`);
 });
 
-bot.command("join", ctx => {
-  const chatId = ctx.chat.id;
-  const userId = ctx.from.id;
-  const userName = ctx.from.first_name;
+bot.command("join", (ctx) => {
+    const chatId = ctx.chat.id;
+    const userId = ctx.from.id;
+    const userName = ctx.from.first_name;
 
-  const game = gameManager.getGame(chatId);
-  if (!game) return ctx.reply("No active game! Start one with /startgame");
-  if (game.eliminated.has(userId)) return ctx.reply(`${userName}, you were eliminated ❌`);
+    const game = gameManager.getGame(chatId);
+    if (!game) return ctx.reply("No active game! Start one with /startgame");
+    if (game.eliminated.has(userId)) return ctx.reply(`${userName}, you were eliminated ❌`);
 
-  const added = gameManager.addPlayer(chatId, userId, userName);
-  if (!added) return ctx.reply(`${userName} is already in the game.`);
+    const added = gameManager.addPlayer(chatId, userId, userName);
+    if (!added) return ctx.reply(`${userName} is already in the game.`);
 
-  if (game.phase === "waiting") {
-    ctx.reply(`${userName} joined! Players: ${formatTurnOrder(game.players)}`);
+    if (game.phase === "waiting") {
+        ctx.reply(`${userName} joined! Players: ${formatTurnOrder(game.players)}`);
 
-    if (game.players.length >= MIN_PLAYERS) {
-      game.phase = "playing";
-      gameManager.shufflePlayers(chatId);
-      ctx.reply(`✅ Game starting!\nTurn order: ${formatTurnOrder(game.players)}`);
-      startTurnTimer(chatId, ctx);
+        if (game.players.length >= MIN_PLAYERS) {
+            game.phase = "playing";
+            gameManager.shufflePlayers(chatId);
+            ctx.reply(`✅ Game starting!\nTurn order: ${formatTurnOrder(game.players)}`);
+            startTurnTimer(chatId, ctx);
+        }
+    } else {
+        ctx.reply(`${userName} joined mid-game! They’ll join next round.`);
     }
-  } else {
-    ctx.reply(`${userName} joined mid-game! They’ll join next round.`);
-  }
 });
 
-bot.command("flee", ctx => {
-  const chatId = ctx.chat.id;
-  const userId = ctx.from.id;
-  const game = gameManager.getGame(chatId);
-  if (!game || game.phase !== "playing") return ctx.reply("No active game to flee from.");
+bot.command("flee", (ctx) => {
+    const chatId = ctx.chat.id;
+    const userId = ctx.from.id;
+    const game = gameManager.getGame(chatId);
+    if (!game || game.phase !== "playing") return ctx.reply("No active game to flee from.");
 
-  const player = game.players.find(p => p.id === userId);
-  if (!player) return ctx.reply("You are not in the game.");
+    const player = game.players.find(p => p.id === userId);
+    if (!player) return ctx.reply("You are not in the game.");
 
-  gameManager.removePlayer(chatId, userId);
-  ctx.reply(`${player.name} left the game ❌`);
+    gameManager.removePlayer(chatId, userId);
+    ctx.reply(`${player.name} left the game ❌`);
 
-  if (game.players.length === 1) {
-    ctx.reply(`🏆 ${game.players[0].name} wins!`);
+    if (game.players.length === 1) {
+        ctx.reply(`🏆 <a href="tg://user?id=${game.players[0].id}">${game.players[0].name}</a> wins!`, { parse_mode: "HTML" });
+        gameManager.endGame(chatId);
+    } else if (game.players.length > 1) {
+        startTurnTimer(chatId, ctx);
+    }
+});
+
+bot.command("endgame", (ctx) => {
+    const chatId = ctx.chat.id;
+    const game = gameManager.getGame(chatId);
+    if (!game) return ctx.reply("No active game!");
     gameManager.endGame(chatId);
-  } else if (game.players.length > 1) {
-    startTurnTimer(chatId, ctx);
-  }
-});
-
-bot.command("endgame", ctx => {
-  const chatId = ctx.chat.id;
-  const game = gameManager.getGame(chatId);
-  if (!game) return ctx.reply("No active game!");
-  gameManager.endGame(chatId);
-  ctx.reply("Game ended manually.");
+    ctx.reply("Game ended manually.");
 });
 
 // --- Word handler ---
 bot.on("message:text", async ctx => {
-  const text = ctx.message.text.trim();
-  if (text.startsWith("/")) return;
+    const text = ctx.message.text.trim();
+    if (text.startsWith("/")) return;
 
-  const chatId = ctx.chat.id;
-  const userId = ctx.from.id;
-  const word = text.toLowerCase();
+    const chatId = ctx.chat.id;
+    const userId = ctx.from.id;
+    const word = text.toLowerCase();
 
-  const game = gameManager.getGame(chatId);
-  if (!game || game.phase !== "playing") return;
+    const game = gameManager.getGame(chatId);
+    if (!game || game.phase !== "playing") return;
 
-  const current = gameManager.currentPlayer(chatId);
-  if (current.id !== userId) return ctx.reply(`⛔ Not your turn! Current: ${current.name}`);
+    // Only players can play
+    const player = game.players.find(p => p.id === userId);
+    if (!player) return; // Ignore messages from non-players
 
-  // Word validation
-  if (word.length < game.minLength) return ctx.reply(`❌ Word too short! Min: ${game.minLength}`);
-  if (game.lastWord && word[0] !== game.lastWord.slice(-1)) return ctx.reply(`❌ Word must start with '${game.lastWord.slice(-1)}'`);
-  if (game.usedWords.has(word)) return ctx.reply("❌ Word already used!");
+    const current = gameManager.currentPlayer(chatId);
+    if (current.id !== userId) {
+        const mentionCurrent = `<a href="tg://user?id=${current.id}">${current.name}</a>`;
+        return ctx.reply(`⛔ Not your turn! Current turn: ${mentionCurrent}`, { parse_mode: "HTML" });
+    }
 
-  const valid = await gameManager.validateWord(word);
-  if (!valid) return ctx.reply("❌ Not a valid word!");
+    if (word.length < game.minLength) return ctx.reply(`❌ Word too short! Min length: ${game.minLength}`);
 
-  // Accept word
-  gameManager.addWord(chatId, userId, word);
-  ctx.reply(`✅ Word accepted: ${word}`);
+    // First word
+    if (!game.lastWord) {
+        const valid = await gameManager.validateWord(word);
+        if (!valid) return ctx.reply("❌ Not a valid word!");
+        gameManager.addWord(chatId, userId, word);
+    } else {
+        if (word[0] !== game.lastWord.slice(-1).toLowerCase()) return ctx.reply(`❌ Word must start with '${game.lastWord.slice(-1).toUpperCase()}'`);
+        if (game.usedWords.has(word)) return ctx.reply("❌ Word already used!");
+        const valid = await gameManager.validateWord(word);
+        if (!valid) return ctx.reply("❌ Not a valid word!");
+        gameManager.addWord(chatId, userId, word);
+    }
 
-  // Move to next turn
-  gameManager.nextTurn(chatId);
-  startTurnTimer(chatId, ctx);
+    if (game.timer) clearTimeout(game.timer);
+    gameManager.nextTurn(chatId);
+
+    const next = gameManager.currentPlayer(chatId);
+    const mentionNext = `<a href="tg://user?id=${next.id}">${next.name}</a>`;
+    const lastLetter = game.lastWord.slice(-1).toUpperCase();
+
+    ctx.reply(
+        `✅ Word accepted: ${word}\n➡️ Next turn: ${mentionNext}\n🔤 Next word must start with: '${lastLetter}'`,
+        { parse_mode: "HTML" }
+    );
+
+    startTurnTimer(chatId, ctx);
 });
 
 // --- Start bot ---
